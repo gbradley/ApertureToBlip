@@ -1,8 +1,10 @@
 //
 //  API.h
 //
-//  Once you've created an instance, you'll probably only need to use the request:... method, which
-//  accepts success and failure callback blocks. I should probably rewrite this as a singleton object.
+//  Once you've created an instance, you'll probably only
+//  need to use the request:... method, which accepts
+//  success and failure callback blocks. I should probably
+//  rewrite this as a singleton.
 
 #import <Foundation/Foundation.h>
 #import <CommonCrypto/CommonDigest.h>
@@ -22,14 +24,14 @@
     NSMutableData *asyncData;
     void (^onasyncsuccess)();
     void (^onasyncfailure)();
-    BOOL asyncInProgress;               // a flag to determine when an async POST request is busy
+    BOOL asyncInProgress;
     
 }
 
 typedef enum {
-    APIAuthTypeNone = 0,
-    APIAuthTypeApplication = 1,
-    APIAuthTypeUser = 2
+    APIAuthTypeNone           = 0,
+    APIAuthTypeApplication    = 1,
+    APIAuthTypeUser           = 2
 } APIAuthType;
 
 @property (nonatomic, retain) NSString *key;

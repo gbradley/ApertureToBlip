@@ -23,9 +23,11 @@
 
 - (NSString *) buildUrlString:(NSString *)resource {
     // ensure requests to the token resource are over https
-    NSString *protocol = @"http";
+    NSString *protocol;
     if (([resource isEqualToString:@"token"])) {
         protocol = @"https";
+    } else {
+        protocol = @"http";
     }
     
     // generate the first part of the URL string
@@ -33,12 +35,6 @@
 }
 
 - (BOOL) request:(NSString *) method resource:(NSString *) resource params:(NSMutableDictionary *) params authType:(APIAuthType) auth onSuccess:(void (^)(NSDictionary *response)) success onFailure:(void (^)(NSError *error)) failure {
-    
-    // ensure requests to the token resource are over https
-    NSString *protocol = @"http";
-    if (([resource isEqualToString:@"token"])) {
-        protocol = @"https";
-    }
     
     // generate the first part of the URL string
     NSString *urlString = [self buildUrlString:resource];

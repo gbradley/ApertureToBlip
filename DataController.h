@@ -2,25 +2,22 @@
 //  DataController.h
 //  ApertureToBlip
 //
-//  Created by Graham Bradley on 24/04/2010.
-//  Copyright 2010 __MyCompanyName__. All rights reserved.
-//
 
 #import <Cocoa/Cocoa.h>
 
 
 @interface DataController : NSObject {
 	
-	NSString *auth_username;
-	NSString *auth_token;
-    NSString *auth_secret;
+	NSString *displayName;
+	NSString *userToken;
+    NSString *userSecret;
     BOOL visitJournalAfterExport;
 	
 }
 
-@property (copy, nonatomic) NSString *auth_username;
-@property (copy, nonatomic) NSString *auth_token;
-@property (copy, nonatomic) NSString *auth_secret;
+@property (copy, nonatomic) NSString *displayName;
+@property (copy, nonatomic) NSString *userToken;
+@property (copy, nonatomic) NSString *userSecret;
 @property BOOL visitJournalAfterExport;
 
 - (void) saveData;

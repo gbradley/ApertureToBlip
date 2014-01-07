@@ -11,7 +11,6 @@
 		8D5B49B4048680CD000E48DA /* Cocoa.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 1058C7ADFEA557BF11CA2CBB /* Cocoa.framework */; };
 		B80FD426184E661F002833DA /* PluginManager.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = B80FD425184E661F002833DA /* PluginManager.framework */; };
 		B80FD429184E7777002833DA /* NSString+URLEncoding.m in Sources */ = {isa = PBXBuildFile; fileRef = B80FD428184E7777002833DA /* NSString+URLEncoding.m */; };
-		B80FD42B184E8013002833DA /* api-keys.plist in Resources */ = {isa = PBXBuildFile; fileRef = B80FD42A184E8013002833DA /* api-keys.plist */; };
 		B82E235116E81423006362F4 /* DataController.m in Sources */ = {isa = PBXBuildFile; fileRef = B82E235016E81423006362F4 /* DataController.m */; };
 		B82E235B16E81496006362F4 /* NSDataAdditions.m in Sources */ = {isa = PBXBuildFile; fileRef = B82E235A16E81496006362F4 /* NSDataAdditions.m */; };
 		B82E235D16E814DD006362F4 /* libz.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = B82E235C16E814DD006362F4 /* libz.dylib */; };
@@ -34,7 +33,6 @@
 		B80FD425184E661F002833DA /* PluginManager.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = PluginManager.framework; path = ../../../../Frameworks/PluginManager.framework; sourceTree = "<group>"; };
 		B80FD427184E7777002833DA /* NSString+URLEncoding.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = "NSString+URLEncoding.h"; sourceTree = "<group>"; };
 		B80FD428184E7777002833DA /* NSString+URLEncoding.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = "NSString+URLEncoding.m"; sourceTree = "<group>"; };
-		B80FD42A184E8013002833DA /* api-keys.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; path = "api-keys.plist"; sourceTree = "<group>"; };
 		B82E234F16E81423006362F4 /* DataController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = DataController.h; sourceTree = "<group>"; };
 		B82E235016E81423006362F4 /* DataController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = DataController.m; sourceTree = "<group>"; };
 		B82E235916E81496006362F4 /* NSDataAdditions.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = NSDataAdditions.h; sourceTree = "<group>"; };
@@ -90,7 +88,6 @@
 		089C167CFE841241C02AAC07 /* Resources */ = {
 			isa = PBXGroup;
 			children = (
-				B80FD42A184E8013002833DA /* api-keys.plist */,
 				B82E235E16E814FE006362F4 /* ApertureToBlip.nib */,
 				8D5B49B7048680CD000E48DA /* Info.plist */,
 				D118EA640AC08CCB006DD2FE /* Localizable.strings */,
@@ -215,7 +212,6 @@
 				8D5B49B0048680CD000E48DA /* InfoPlist.strings in Resources */,
 				D118EA660AC08CCB006DD2FE /* Localizable.strings in Resources */,
 				B82E235F16E814FE006362F4 /* ApertureToBlip.nib in Resources */,
-				B80FD42B184E8013002833DA /* api-keys.plist in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

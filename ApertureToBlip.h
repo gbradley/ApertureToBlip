@@ -58,9 +58,8 @@
 	DataController *dataController;
 	API *api;
 	BOOL uploading;
-	BOOL visitJournalAfterExport;
 	int uploadCount;
-    int uploadedEntryId;
+    NSString *uploadedEntryId;
 	NSMutableArray *uploadLog;
 }
 
