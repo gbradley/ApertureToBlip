@@ -13,8 +13,7 @@
 #import "DataController.h"
 #import "API.h"
 
-@interface ApertureToBlip : NSObject <ApertureExportPlugIn, NSTextFieldDelegate>
-{
+@interface ApertureToBlip : NSObject <ApertureExportPlugIn, NSTextFieldDelegate> {
 	// The cached API Manager object, as passed to the -initWithAPIManager: method.
 	id _apiManager;
 	

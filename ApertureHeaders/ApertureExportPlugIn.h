@@ -28,7 +28,7 @@ typedef struct
 {
 	unsigned long	currentValue;
 	unsigned long	totalValue;
-	NSString		*message;
+	__unsafe_unretained NSString		*message;
 	BOOL			indeterminateProgress;	
 } ApertureExportProgress;
 

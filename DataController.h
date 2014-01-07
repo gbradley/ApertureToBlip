@@ -13,12 +13,14 @@
 	
 	NSString *auth_username;
 	NSString *auth_token;
+    NSString *auth_secret;
     BOOL visitJournalAfterExport;
 	
 }
 
 @property (copy, nonatomic) NSString *auth_username;
 @property (copy, nonatomic) NSString *auth_token;
+@property (copy, nonatomic) NSString *auth_secret;
 @property BOOL visitJournalAfterExport;
 
 - (void) saveData;

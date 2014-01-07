@@ -1,9 +1,5 @@
 //
 //  API.h
-//  Blipfoto
-//
-//  Created by Graham Bradley on 10/08/2012.
-//  Copyright (c) 2012 Blipfoto. All rights reserved.
 //
 //  Once you've created an instance, you'll probably only need to use the request:... method, which
 //  accepts success and failure callback blocks. I should probably rewrite this as a singleton object.
@@ -18,16 +14,15 @@
     NSString *userToken;
     NSString *userSecret;
     NSString *displayName;
-    NSString *prefixDefault;
     
     int timestampOffset;
     BOOL timestampOffsetFetched;
     
     NSURLConnection *asyncConn;
-    BOOL asyncInProgress;               // a flag to determine when an async POST request is busy
     NSMutableData *asyncData;
-    void (^onasyncsuccess)();           // must store these during delegate calls
+    void (^onasyncsuccess)();
     void (^onasyncfailure)();
+    BOOL asyncInProgress;               // a flag to determine when an async POST request is busy
     
 }
 
@@ -61,8 +56,10 @@ typedef enum {
 // add default parameters including auth
 - (NSMutableDictionary *) addDefaultParams:(NSMutableDictionary *) params authType:(APIAuthType) auth;
 
+- (NSString *) buildUrlString:(NSString *) resource;
+
 // create query string from parameters
-- (NSMutableString *) buildQueryString:(NSMutableDictionary *) params;
+- (NSString *) buildQueryString:(NSMutableDictionary *) params;
 
 // execute synchronous request in background
 - (void) executeSynchronousRequest:(NSMutableArray *) connectionInfo;
@@ -79,16 +76,10 @@ typedef enum {
 // generate an MD5 hash
 - (NSString *) MD5:(NSString *) str;
 
-// generate a random 32-bit string
+// generate a random 32-len string
 - (NSString *) generateNonce;
 
 // return the timestamp including the stored offset
 - (int) generateTimestamp;
-
-// return the difference in hours between GMT and the local timezone
-- (int) generateTimezoneOffset;
-
-// return a UUID
-- (NSString *) getDeviceID;
 
 @end

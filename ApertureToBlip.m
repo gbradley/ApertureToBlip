@@ -24,97 +24,64 @@
 // Returning nil means that a plug-in chooses not to be accessible.
 //---------------------------------------------------------
 
-- (id)initWithAPIManager:(id<PROAPIAccessing>)apiManager
-{
+- (id)initWithAPIManager:(id<PROAPIAccessing>)apiManager {
 	if (self = [super init]) {
 		
-		NSLog(@"initialising plugin");
-		
 		_apiManager	= apiManager;
-		_exportManager = [[_apiManager apiForProtocol:@protocol(ApertureExportManager)] retain];
+		_exportManager = [_apiManager apiForProtocol:@protocol(ApertureExportManager)];
         
 		if (!_exportManager) {
 			return nil;
         }
-		
 		_progressLock = [[NSLock alloc] init];
-		
-		// Finish your initialization here
+        
 		uploading = NO;
 		visitJournalAfterExport = YES;
 		uploadCount = 0;
         uploadedEntryId = 0;
-		
 	}
 	
 	return self;
 }
 
-- (void)dealloc
-{
-	// Release the top-level objects from the nib.
-	[_topLevelNibObjects makeObjectsPerformSelector:@selector(release)];
-	//[_topLevelNibObjects release];
-	
-	[_progressLock release];
-	[_exportManager release];
-	
-	[super dealloc];
-}
-
-
 #pragma mark -
 // UI Methods
 #pragma mark UI Methods
 
-- (NSView *)settingsView
-{
+- (NSView *)settingsView {
 	if (nil == settingsView) {
-        
-		// Load the nib using NSNib, and retain the array of top-level objects so we can release
-		// them properly in dealloc
 		NSBundle *myBundle = [NSBundle bundleForClass:[self class]];
 		NSNib *myNib = [[NSNib alloc] initWithNibNamed:@"ApertureToBlip" bundle:myBundle];
-		if ([myNib instantiateWithOwner:self topLevelObjects:&_topLevelNibObjects])
-		{
-			[_topLevelNibObjects retain];
-		}
-		[myNib release];
+        NSArray __autoreleasing *pointer = _topLevelNibObjects;
+		[myNib instantiateWithOwner:self topLevelObjects:&pointer];
 	}
 	
 	return settingsView;
 }
 
-- (NSView *)firstView
-{
+- (NSView *)firstView {
 	return firstView;
 }
 
-- (NSView *)lastView
-{
+- (NSView *)lastView {
 	return lastView;
 }
 
 - (void)willBeActivated {
 	
 	self.dataController = [[DataController alloc] init];
-	api = [[API alloc] initWithKey:@"" secret:@""];
-	if (![self.dataController.auth_username isEqualToString: @"-1"]){
-		api.authToken = self.dataController.auth_token;
+	api = [[API alloc] initWithKey:@"d345507340efc713b1736275b470bfe2" secret:@"7e4ab1a943a9fb2a03e793801040156b"];
+	if (![self.dataController.auth_username isEqualToString: @"-1"]) {
+		api.userToken = self.dataController.auth_token;
+        api.userSecret = self.dataController.auth_secret;
 		connectLabel.stringValue = [NSString stringWithFormat:@"Linked to %@'s journal", self.dataController.auth_username];
 		connectButton.title = @"Unlink";
     }
     
-    if (self.dataController.visitJournalAfterExport){
-        visitJournal.state = YES;
-    }
-    else {
-        visitJournal.state = NO;
-    }
-	
-	// fetch the server timestamp
-	[api listen:@"ResponseParsed" for:self selector:@selector(timeReceived:)];
-	[api request:@"get" resource:@"time" params:nil postdata:nil withImage:nil withAuth:0];
+    visitJournal.state = self.dataController.visitJournalAfterExport;
+    
+    // fetch the server timestamp
+    [api generateTimestamp];
 	
 	entryTitle.delegate = self;
 	entryDesc.delegate = self;
@@ -214,18 +181,6 @@
 	[self updateEntryOptions:0];
 }
 
-// get/time was received
-- (void) timeReceived:(NSNotification *) notif {
-	
-	TBXML *xmlDoc = [notif object];
-	TBXMLElement *data = [TBXML childElementNamed:@"data" parentElement:xmlDoc.rootXMLElement];
-	int timestamp = [[TBXML textForElement:[TBXML childElementNamed:@"timestamp" parentElement:data]] intValue];
-	
-	api.timestampOffset = timestamp-(int)[[NSDate date] timeIntervalSince1970];
-	
-	[api unlisten:@"ResponseParsed" for:self];
-}
-
 - (void) updateEntryOptions:(int) index {
 	
 	[entryThumbnail setImage:[_exportManager thumbnailForImageAtIndex:index size:kExportThumbnailSizeTiny]];
@@ -247,12 +202,41 @@
 
 - (IBAction) connectButtonPressed:(id)sender {
 	if ([connectButton.title isEqualToString:@"Verify"]){
-		[api listen:@"ResponseParsed" for:self selector:@selector(tokenReceived:)];
-		[api request:@"get" resource:@"token" params:[NSDictionary dictionaryWithObjectsAndKeys:tempToken.stringValue, @"temp_token", nil] postdata:nil withImage:nil withAuth:1];
+		
+        [api request:@"get" resource:@"token" params:[NSMutableDictionary dictionaryWithObjectsAndKeys:tempToken.stringValue, @"temp_token", nil] authType:APIAuthTypeApplication onSuccess:^(NSDictionary *response) {
+            
+            NSDictionary *data = [response objectForKey:@"data"];
+            
+            // save prefs
+            self.dataController.auth_token = [data objectForKey:@"token"];
+            self.dataController.auth_secret = [data objectForKey:@"secret"];
+            self.dataController.auth_username = [data objectForKey:@"display_name"];
+            [self.dataController saveData];
+            
+            api.userToken = self.dataController.auth_token;
+            api.userSecret = self.dataController.auth_secret;
+            
+            [tempToken setHidden:YES];
+            connectLabel.stringValue = [NSString stringWithFormat:@"Linked to %@'s journal", self.dataController.auth_username];
+            connectButton.title = @"Unlink";
+            
+        } onFailure:^(NSError *error) {
+            
+            NSLog(@"! %@", error);
+            
+            NSAlert *alert = [[NSAlert alloc] init];
+            [alert addButtonWithTitle:@"OK"];
+            [alert setMessageText:@"Couldn't link journal"];
+            [alert setInformativeText:[NSString stringWithFormat:@"It looks like you copied the code incorrectly or didn't give permission to the app (error %ld).", (long)error.code]];
+            [alert setAlertStyle:NSInformationalAlertStyle];
+            [alert beginSheetModalForWindow:[[self settingsView] window] modalDelegate:self didEndSelector:nil contextInfo:nil];
+            
+        }];
+
     }
 	else if ([connectButton.title isEqualToString:@"Unlink"]){
         
-		NSAlert *alert = [[[NSAlert alloc] init] autorelease];
+		NSAlert *alert = [[NSAlert alloc] init];
 		[alert addButtonWithTitle:@"OK"];
 		[alert addButtonWithTitle:@"Cancel"];
 		[alert setMessageText:@"Unlink journal"];
@@ -273,50 +257,13 @@
 - (void)alertDidEnd:(NSAlert *)alert returnCode:(int)returnCode contextInfo:(void *)contextInfo{
 	if (returnCode == NSAlertFirstButtonReturn) {
         
-		self.dataController.auth_token=@"-1";
-		self.dataController.auth_username=@"-1";
+		self.dataController.auth_token = @"-1";
+        self.dataController.auth_secret = @"-1";
+		self.dataController.auth_username = @"-1";
 		[self.dataController saveData];
         
-		connectButton.title=@"Link";
+		connectButton.title = @"Link";
 		connectLabel.stringValue=@"Start by linking to your Blipfoto journal:";
-    }
-}
-
-
-- (void) tokenReceived:(NSNotification *)notif {
-	
-	[api unlisten:@"ResponseParsed" for:self];
-	
-	TBXML *xmlDoc = [notif object];
-	int errorCode = [api responseError:xmlDoc];
-	
-	tempToken.stringValue = @"";
-	
-	if (errorCode > 0){
-		
-		NSAlert *alert = [[[NSAlert alloc] init] autorelease];
-		[alert addButtonWithTitle:@"OK"];
-		[alert setMessageText:@"Couldn't link journal"];
-		[alert setInformativeText:[NSString stringWithFormat:@"It looks like you copied the code incorrectly or didn't give permission to the app (error %d).", errorCode]];
-		[alert setAlertStyle:NSInformationalAlertStyle];
-		[alert beginSheetModalForWindow:[[self settingsView] window] modalDelegate:self didEndSelector:nil contextInfo:nil];
-		
-    }
-	else {
-		TBXMLElement *data = [TBXML childElementNamed:@"data" parentElement:xmlDoc.rootXMLElement];
-		NSString *displayName = [TBXML textForElement:[TBXML childElementNamed:@"display_name" parentElement:data]];
-		NSString *authToken = [TBXML textForElement:[TBXML childElementNamed:@"token" parentElement:data]];
-		
-		// save prefs
-		self.dataController.auth_token = authToken;
-		self.dataController.auth_username = displayName;
-		[self.dataController saveData];
-		
-		api.authToken = authToken;
-		
-		[tempToken setHidden:YES];
-		connectLabel.stringValue = [NSString stringWithFormat:@"Linked to %@'s journal", displayName];
-		connectButton.title = @"Unlink";
     }
 }
 
@@ -375,11 +322,8 @@
 }
 
 
-- (void)willBeDeactivated
-{
-	NSLog(@"deactivated");
-	[self.dataController release];
-	[self.entries release];
+- (void)willBeDeactivated {
+
 }
 
 #pragma mark
@@ -438,7 +382,7 @@
 
 - (void)exportManagerShouldBeginExport {
 	if ([self.dataController.auth_username isEqualToString:@"-1"]){
-		NSAlert *alert = [[[NSAlert alloc] init] autorelease];
+		NSAlert *alert = [[NSAlert alloc] init];
 		[alert addButtonWithTitle:@"OK"];
 		[alert setMessageText:@"Not linked to journal"];
 		[alert setInformativeText:@"You must link Aperture to your Blipfoto journal before you can export images."];
@@ -455,7 +399,7 @@
 		exportProgress.totalValue = 100;
 		exportProgress.currentValue = 0;
 		exportProgress.indeterminateProgress = NO;
-		exportProgress.message = [@"Starting upload..." retain];
+		exportProgress.message = @"Starting upload...";
 		[self unlockProgress];
 		
 		uploadLog = [[NSMutableArray alloc] initWithCapacity:0];
@@ -491,50 +435,53 @@
 	NSDictionary *entryData = [entries objectAtIndex:index];
 	NSMutableDictionary *params = [NSMutableDictionary dictionaryWithObjectsAndKeys:
                                    [entryData objectForKey:@"title"],
-                                   @"entry_title",
+                                   @"title",
                                    [entryData objectForKey:@"desc"],
-                                   @"entry_description",
+                                   @"description",
                                    [entryData objectForKey:@"tags"],
-                                   @"entry_tags",
+                                   @"tags",
+                                   imageData,
+                                   @"image",
                                    nil];
     
-	[api listen:@"ResponseParsed" for:self selector:@selector(uploadComplete:)];
-	[api listen:@"ProgressUpdated" for:self selector:@selector(uploadProgressUpdated:)];
-	uploading = YES;
-	[api request:@"post" resource:@"entry" params:nil postdata:params withImage:imageData withAuth:2];
-	while(uploading) {
+    [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(uploadProgressUpdated:) name:@"PublishProgressUpdated" object:nil];
+    
+    uploading = YES;
+    
+    [api request:@"post" resource:@"entry" params:params authType:APIAuthTypeUser onSuccess:^(NSDictionary *response) {
+        
+        NSLog(@"%@", response);
+        
+        [[NSNotificationCenter defaultCenter] removeObserver:self name:@"PublishProgressUpdated" object:nil];
+        
+        NSDictionary *data = [response objectForKey:@"data"];
+        uploadedEntryId = [[data objectForKey:@"entry_id"] intValue];
+    
+		[self uploadFinishedWithMessage:[NSString stringWithFormat:@"Image %d published succesfully", (int)[uploadLog count] + 1]];
+        
+    } onFailure:^(NSError *error) {
+        
+        NSLog(@"%@", error);
+        
+        [[NSNotificationCenter defaultCenter] removeObserver:self name:@"PublishProgressUpdated" object:nil];
+        
+        [self uploadFinishedWithMessage:[NSString stringWithFormat:@"Image %d not published - %@", (int)[uploadLog count]+ 1, [error.userInfo objectForKey:NSLocalizedDescriptionKey]]];
+    }];
+    
+    while (uploading) {
 		[[NSRunLoop currentRunLoop] runMode:NSDefaultRunLoopMode beforeDate:[NSDate distantFuture]];
     }
-	
-	NSLog(@"post request done");
 	
 	return NO;
 }
 
-- (void) uploadComplete:(NSNotification *) notify {
-	NSLog(@"ok, upload complete");
-	NSString *message;
-	TBXML *xmlDoc = [notify object];
-	int errorCode = [api responseError:xmlDoc];
-	if (errorCode > 0){
-		TBXMLElement *error = [TBXML childElementNamed:@"error" parentElement:xmlDoc.rootXMLElement];
-		message = [NSString stringWithFormat:@"Image %d not published - %@", (int)[uploadLog count]+ 1, [TBXML textForElement:[TBXML childElementNamed:@"message" parentElement:error]]];
-    }
-	else {
-        
-        
-        uploadedEntryId = [[TBXML textForElement: [TBXML childElementNamed:@"entry_id" parentElement:[TBXML childElementNamed:@"data" parentElement:xmlDoc.rootXMLElement]]] intValue];
-        
-        
-		message = [NSString stringWithFormat:@"Image %d published succesfully", (int)[uploadLog count] + 1];
-    }
-	[self lockProgress];
+- (void) uploadFinishedWithMessage:(NSString *) message {
+    [self lockProgress];
 	exportProgress.message = message;
 	[self unlockProgress];
 	[uploadLog addObject:message];
 	
 	[NSTimer scheduledTimerWithTimeInterval:3 target:self selector:@selector(uploadNext:) userInfo:nil repeats:NO];
-    
 }
 
 - (void) uploadNext:(NSTimer *) timer {
@@ -553,10 +500,7 @@
 
 - (void)exportManagerDidFinishExport {
 	
-	[api unlisten:@"ResponseParsed" for:self];
-	[api unlisten:@"ProgressUpdated" for:self];
-	
-	NSLog(@"%@", [uploadLog componentsJoinedByString:@"\n"]);
+	//NSLog(@"%@", [uploadLog componentsJoinedByString:@"\n"]);
 	[_exportManager shouldFinishExport];
 	
 	if (visitJournalAfterExport){
